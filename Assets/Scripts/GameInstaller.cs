@@ -1,3 +1,5 @@
+using Game;
+using UI;
 using UnityEngine;
 using Zenject;
 
@@ -14,9 +16,10 @@ public class GameInstaller : MonoInstaller
     public override void InstallBindings()
     {
         SignalBusInstaller.Install(Container);
-        
+
         Container.BindInterfacesAndSelfTo<UIManager>().FromInstance(_uiManager).AsSingle();
         Container.BindInterfacesAndSelfTo<GameManager>().FromInstance(_gameManager).AsSingle();
-        
+
+        Container.DeclareSignal<PlatformPlacedSignal>();
     }
 }
