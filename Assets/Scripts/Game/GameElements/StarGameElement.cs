@@ -8,9 +8,7 @@ namespace Game
     {
         private void Awake()
         {
-            DoHover();
-            DoTurn();
+            DoHover(1f, 1.5f);
         }
-        
     }
 }

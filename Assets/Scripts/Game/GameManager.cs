@@ -70,7 +70,7 @@ namespace Game
                     _signalBus.Fire(new LevelStartedSignal());
                     PrepareGameplay();
                 }
-                else
+                else 
                 {
                     _gameplayController.SetGameplayState(GameplayState.Menu);
                 }

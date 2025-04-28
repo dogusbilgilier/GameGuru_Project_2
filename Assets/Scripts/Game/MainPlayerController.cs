@@ -110,6 +110,11 @@ namespace Game
                 OnEnterFinishArea();
                 _signalBus.Fire(new PlayerReachFinalPlatformSignal());
             }
+
+            if (other.TryGetComponent<GameElementBase>(out GameElementBase gameElement))
+            {
+                gameElement.OnCollected();
+            }
         }
 
         private void OnEnterFinishArea()
