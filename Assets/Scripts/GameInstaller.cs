@@ -1,3 +1,4 @@
+using DefaultNamespace;
 using Game;
 using UI;
 using UnityEngine;
@@ -19,7 +20,11 @@ public class GameInstaller : MonoInstaller
 
         Container.BindInterfacesAndSelfTo<UIManager>().FromInstance(_uiManager).AsSingle();
         Container.BindInterfacesAndSelfTo<GameManager>().FromInstance(_gameManager).AsSingle();
+        Container.Bind<LevelManager>().FromComponentInHierarchy().AsSingle();
 
         Container.DeclareSignal<PlatformPlacedSignal>();
+        Container.DeclareSignal<GameplayStateChangedSignal>();
+        Container.DeclareSignal<PlacePlatformRequestSignal>();
+        Container.DeclareSignal<LevelFinishedSignal>();
     }
 }
