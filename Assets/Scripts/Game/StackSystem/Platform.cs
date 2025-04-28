@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.Pool;
-using Zenject;
 
 namespace Game
 {
@@ -9,19 +8,19 @@ namespace Game
         [Header("References")]
         [SerializeField] private PlatformMovementController _movementController;
         [SerializeField] private MeshRenderer _meshRenderer;
+        public MeshRenderer MeshRenderer => _meshRenderer;
         public float Width => transform.localScale.x;
 
         private IObjectPool<Platform> _assignedPool;
 
         public void Initialize()
         {
-
         }
 
         public void Prepare(Vector3 position, Material material)
         {
             transform.position = position;
-            
+
             MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
             _meshRenderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetColor("_Color", material.color);
@@ -53,6 +52,10 @@ namespace Game
         {
             Debug.Assert(_assignedPool != null);
             _assignedPool.Release(this);
+        }
+
+        private void OnDestroy()
+        {
         }
     }
 }

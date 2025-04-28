@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using Zenject;
 
 namespace Game.GameElements
 {
@@ -15,7 +14,8 @@ namespace Game.GameElements
 
         private void SetWidth()
         {
-            float targetWidth = GameConfigs.Instance.PlatformWidth;
+            
+            float targetWidth = GameManager.Instance.GameConfigs.PlatformWidth;
             float currentWidth = _meshRenderer.bounds.size.x;
 
             float scaleMultiplier = targetWidth / currentWidth;

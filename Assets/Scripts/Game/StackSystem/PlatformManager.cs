@@ -41,8 +41,6 @@ namespace Game
         private float _moveSpeed;
         private float _movementOverflowAmount;
 
-        private bool _isLevelFailed;
-
         private List<Platform> _currentLevelPlatforms = new List<Platform>();
 
         private float CurrentPlatformWidth { get; set; }
@@ -69,11 +67,10 @@ namespace Game
         public void PrepareForLevel()
         {
             _currentLevelPlatforms.Clear();
-            CurrentPlatformWidth = GameConfigs.Instance.PlatformWidth;
+            CurrentPlatformWidth = _gameManager.GameConfigs.PlatformWidth;
             _successfullyPlacedPlatformCountInLevel = 0;
             _targetPlatformCountForLevel = _levelManager.CurrentLevelInstance.platformCount;
             _isLevelCompleted = false;
-            _isLevelFailed = false;
             SpawnNewMovingPlatform();
 
             IsPrepared = true;
@@ -96,12 +93,12 @@ namespace Game
         {
             _currentMovingPlatform.StopMovement();
 
-            if (_isLevelCompleted || _isLevelFailed)
+            if (_isLevelCompleted)
                 return;
 
             PlacePlatform(_successfullyPlacedPlatformCountInLevel == 0);
 
-            if (_isLevelCompleted || _isLevelFailed)
+            if (_isLevelCompleted)
                 return;
 
             _lastPlatform = _currentMovingPlatform;
@@ -119,8 +116,8 @@ namespace Game
 
         private void PlacePlatform(bool isFirst = false)
         {
-            float lastLeft = isFirst ? -(GameConfigs.Instance.PlatformWidth * 0.5f) : _lastPlatform.transform.position.x - (_lastPlatform.Width * 0.5f);
-            float lastRight = isFirst ? (GameConfigs.Instance.PlatformWidth * 0.5f) : _lastPlatform.transform.position.x + (_lastPlatform.Width * 0.5f);
+            float lastLeft = isFirst ? -(_gameManager.GameConfigs.PlatformWidth * 0.5f) : _lastPlatform.transform.position.x - (_lastPlatform.Width * 0.5f);
+            float lastRight = isFirst ? (_gameManager.GameConfigs.PlatformWidth * 0.5f) : _lastPlatform.transform.position.x + (_lastPlatform.Width * 0.5f);
 
             float currentLeft = _currentMovingPlatform.transform.position.x - (_currentMovingPlatform.Width * 0.5f);
             float currentRight = _currentMovingPlatform.transform.position.x + (_currentMovingPlatform.Width * 0.5f);
@@ -163,14 +160,12 @@ namespace Game
             }
             else
             {
-                _isLevelCompleted = true;
                 MissWholePlatform();
             }
         }
 
         private void OnPlatformPlacedSuccessfully()
         {
-            Debug.Log("OnPlatformPlacedSuccessfully");
             _successfullyPlacedPlatformCountInLevel++;
             if (_successfullyPlacedPlatformCountInLevel == 1)
             {
@@ -184,45 +179,26 @@ namespace Game
         {
             if (_successfullyPlacedPlatformCountInLevel >= _targetPlatformCountForLevel)
             {
-                Debug.Log("CheckIsLevelFinished");
+                _perfectTimingStreakCount = 0;
                 _isLevelCompleted = true;
-                _signalBus.Fire(new LevelFinishedSignal
-                {
-                    IsSuccess = true
-                });
+                _signalBus.Fire(new LevelFinishSuccessSignal());
             }
         }
 
         private void MissWholePlatform()
         {
-            _perfectTimingStreakCount = 0;
             _isLevelCompleted = true;
-            _createdPlatformCount -= _currentLevelPlatforms.Count;
-
-            _signalBus.Fire<PlatformPlacedSignal>(new PlatformPlacedSignal
-            {
-                PlatformManager = this,
-                StreakCount = _perfectTimingStreakCount,
-                IsMissedCompletely = true,
-                SuccessfullyPlacedPlatformCount = _successfullyPlacedPlatformCountInLevel
-            });
-
-            _signalBus.Fire(new LevelFinishedSignal
-            {
-                IsSuccess = false,
-                CurrentLevelPlatforms = _currentLevelPlatforms
-            });
+            _currentMovingPlatform.gameObject.SetActive(false);
+            CreateFallingBlock(_currentMovingPlatform.transform.position.x,_currentMovingPlatform.transform.localScale.x);
         }
 
         private void PerfectTimingStreakBroken()
         {
             _perfectTimingStreakCount = 0;
-            _signalBus.Fire<PlatformPlacedSignal>(new PlatformPlacedSignal
+            _signalBus.Fire(new PlatformPlacedSignal
             {
-                PlatformManager = this,
+                PlacedPlatform = _currentMovingPlatform,
                 StreakCount = _perfectTimingStreakCount,
-                IsMissedCompletely = false,
-                SuccessfullyPlacedPlatformCount = _successfullyPlacedPlatformCountInLevel
             });
         }
 
@@ -241,10 +217,8 @@ namespace Game
             _perfectTimingStreakCount++;
             _signalBus.Fire(new PlatformPlacedSignal
             {
-                PlatformManager = this,
+                PlacedPlatform = _currentMovingPlatform,
                 StreakCount = _perfectTimingStreakCount,
-                IsMissedCompletely = false,
-                SuccessfullyPlacedPlatformCount = _successfullyPlacedPlatformCountInLevel
             });
         }
 
@@ -275,7 +249,7 @@ namespace Game
 
             Vector3 fallingPiecePos = new Vector3(centerX, -(_platformDepth * 0.5f), _lastPlatform.transform.position.z + _platformLength);
             Vector3 fallingPieceScale = new Vector3(width, _platformDepth, _platformLength);
-            fallingBlock.Prepare(fallingPiecePos, fallingPieceScale, _platformMaterials[_createdPlatformCount - 1]);
+            fallingBlock.Prepare(fallingPiecePos, fallingPieceScale, _platformMaterials[(_createdPlatformCount - 1) & _platformMaterials.Length]);
         }
 
         private void SpawnNewMovingPlatform()
@@ -331,6 +305,14 @@ namespace Game
 
         private void OnPlayerFall(PlayerFallSignal args)
         {
+            Debug.Log("PlayerFall");
+            _perfectTimingStreakCount = 0;
+            _isLevelCompleted = true;
+            _createdPlatformCount -= _currentLevelPlatforms.Count;
+
+            Debug.Log(_createdPlatformCount);
+            _signalBus.Fire(new LevelCompletelyFailed());
+
             foreach (var platform in _currentLevelPlatforms)
             {
                 platform.ReleaseFromPool();
@@ -352,7 +334,7 @@ namespace Game
             platform.Prepare(position, _platformMaterials[materialIndex]);
 
             platform.transform.SetSiblingIndex(0);
-            
+
             _createdPlatformCount++;
         }
 
@@ -365,7 +347,8 @@ namespace Game
 
         private void OnReleasePlatform(Platform platform)
         {
-            platform.gameObject.SetActive(false);
+            if (platform != null && platform.gameObject != null)
+                platform.gameObject.SetActive(false);
         }
 
         private void OnDestroyPlatform(Platform platform)
@@ -405,16 +388,20 @@ namespace Game
 
 public struct PlatformPlacedSignal
 {
-    public PlatformManager PlatformManager;
+    public Platform PlacedPlatform;
     public int StreakCount;
-    public bool IsMissedCompletely;
-    public int SuccessfullyPlacedPlatformCount;
 }
 
-public struct LevelFinishedSignal
+public struct LevelFinishSuccessSignal
 {
-    public bool IsSuccess;
-    public List<Platform> CurrentLevelPlatforms;
+}
+
+public struct LevelFailedAndWaitingPlayerToFall
+{
+}
+
+public struct LevelCompletelyFailed
+{
 }
 
 public struct FirstPlatformPlacedInLevelSignal

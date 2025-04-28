@@ -1,6 +1,4 @@
-﻿using System;
-using Game.GameElements;
-using UnityEngine;
+﻿using Game.GameElements;
 
 namespace Game
 {

@@ -27,12 +27,12 @@ namespace Game
             _gameplayController.Initialize(_signalBus);
             
             _signalBus.Subscribe<PlayerReachFinalPlatformSignal>(OnPlayerReachFinalPlatform);
-            _signalBus.Subscribe<PlayerFallSignal>(OnPlayerFall);
+            _signalBus.Subscribe<LevelCompletelyFailed>(OnLevelCompletelyFailed);
 
             CreateMainPlayer();
         }
 
-        private void OnPlayerFall()
+        private void OnLevelCompletelyFailed()
         {
             _gameplayController.OnLevelFailed();
         }
@@ -41,7 +41,7 @@ namespace Game
         {
             MainPlayerController mainPlayerController = Instantiate(_mainPlayerControllerPrefab, transform);
 
-            mainPlayerController.Initialize(_signalBus);
+            mainPlayerController.Initialize(this,_signalBus);
             _diContainer.Inject(mainPlayerController);
             _cameraController.Initialize(_signalBus);
 
@@ -67,7 +67,6 @@ namespace Game
                 }
                 else if (_gameplayController.CurrentGameplayState == GameplayState.Menu)
                 {
-                    _signalBus.Fire(new LevelStartedSignal());
                     PrepareGameplay();
                 }
                 else 

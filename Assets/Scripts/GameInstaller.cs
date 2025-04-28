@@ -26,15 +26,16 @@ public class GameInstaller : MonoInstaller
         Container.DeclareSignal<PlacePlatformRequestSignal>();
         Container.DeclareSignal<MainPlayerCreatedSignal>();
         
-        Container.DeclareSignal<LevelStartedSignal>();
-        Container.DeclareSignal<LevelFinishedSignal>();
+        Container.DeclareSignal<LevelFinishSuccessSignal>();
         Container.DeclareSignal<PlayerReachFinalPlatformSignal>();
 
         Container.DeclareSignal<FirstPlatformPlacedInLevelSignal>();
         Container.DeclareSignal<PlatformCenterChangedSignal>();
         Container.DeclareSignal<PlayerFallSignal>();
+        Container.DeclareSignal<LevelFailedAndWaitingPlayerToFall>();
         
         
         Container.DeclareSignal<ClearPlatformsSignal>();
+        Container.DeclareSignal<LevelCompletelyFailed>();
     }
 }

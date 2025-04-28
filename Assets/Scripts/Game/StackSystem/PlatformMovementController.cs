@@ -34,5 +34,10 @@ namespace Game
                 transform.position = new Vector3(_startX + offsetX, transform.position.y, transform.position.z);
             }
         }
+
+        private void OnDisable()
+        {
+            _isMoving = false;
+        }
     }
 }

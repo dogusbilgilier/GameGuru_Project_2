@@ -1,5 +1,4 @@
-﻿using System;
-using Game.GameElements;
+﻿using Game.GameElements;
 using UnityEngine;
 using Zenject;
 
@@ -8,6 +7,7 @@ namespace Game
     public class MainPlayerController : MonoBehaviour
     {
         [Inject] private LevelManager _levelManager;
+        private GameManager _gameManager;
         [Header("References")]
         [SerializeField] PlayerAnimationController _animationController;
 
@@ -18,31 +18,28 @@ namespace Game
         private float _horizontalSpeed;
         private bool _isMoving;
         private float _centerX;
-        private bool _checkForFall;
+        private bool _isLevelFinishedSuccessfully;
+        private float _lastPlacedPlatformZPos;
 
-        public void Initialize(SignalBus signalBus)
+        public void Initialize(GameManager gameManager, SignalBus signalBus)
         {
+            _gameManager = gameManager;
             _signalBus = signalBus;
-            transform.position = new Vector3(0f, 0f, GameConfigs.Instance.PlayerStartDistance);
-            _speed = GameConfigs.Instance.PlayerMovementSpeed;
-            _horizontalSpeed = GameConfigs.Instance.PlayerHorizontalSpeed;
+            
+            transform.position = new Vector3(0f, 0f, _gameManager.GameConfigs.PlayerStartDistance);
+            _speed = _gameManager.GameConfigs.PlayerMovementSpeed;
+            _horizontalSpeed = _gameManager.GameConfigs.PlayerHorizontalSpeed;
             IsInitialized = true;
+
             _signalBus.Subscribe<FirstPlatformPlacedInLevelSignal>(OnLevelStarted);
             _signalBus.Subscribe<PlatformCenterChangedSignal>(OnPlatformCenterChanged);
-            _signalBus.Subscribe<LevelFinishedSignal>(OnLevelFinished);
+            _signalBus.Subscribe<LevelFinishSuccessSignal>(OnLevelFinished);
+            _signalBus.Subscribe<PlatformPlacedSignal>(OnPlatformPlaced);
         }
-
-        private void OnLevelFinished(LevelFinishedSignal args)
-        {
-            if (args.IsSuccess == false)
-            {
-                _checkForFall = true;
-            }
-        }
-
 
         private void OnLevelStarted()
         {
+            _isLevelFinishedSuccessfully = false;
             StartMoving();
         }
 
@@ -52,34 +49,33 @@ namespace Game
                 return;
 
             Move();
+
+            if (_isLevelFinishedSuccessfully)
+                return;
+
             CheckPlatformBelow();
         }
 
         private void CheckPlatformBelow()
         {
-            if (_checkForFall == false)
-                return;
-
-            Ray ray = new Ray(transform.position + Vector3.back + Vector3.up, Vector3.down);
-            float rayDistance = 5f;
-            if (Physics.Raycast(ray, out RaycastHit hit, rayDistance) == false)
+            if (transform.position.z > _lastPlacedPlatformZPos && _lastPlacedPlatformZPos > 0f)
             {
-                _checkForFall = false;
-                ReturnToLevelStartPosition();
+                Ray ray = new Ray(transform.position + Vector3.back + Vector3.up, Vector3.down);
+                float rayDistance = 5f;
+                if (Physics.Raycast(ray, out RaycastHit hit, rayDistance) == false)
+                {
+                    _signalBus.Fire(new PlayerFallSignal());
+                    ReturnToLevelStartPosition();
+                }
             }
         }
 
         private void ReturnToLevelStartPosition()
         {
             StopMoving();
-
             _centerX = 0f;
-
-            float zPos = _levelManager.CompletedLevelsInSession == 0 ? GameConfigs.Instance.PlayerStartDistance : _levelManager.GetLastLevelsStartDistance() + (_levelManager.GetFinishPlatformLength() * 2);
-
+            float zPos = _levelManager.CompletedLevelsInSession == 0 ? _gameManager.GameConfigs.PlayerStartDistance : _levelManager.GetLastLevelsStartDistance() + (_levelManager.GetFinishPlatformLength() * 2);
             transform.position = new Vector3(0f, 0f, zPos);
-
-            _signalBus.Fire(new PlayerFallSignal());
         }
 
         private void Move()
@@ -126,6 +122,19 @@ namespace Game
         private void OnPlatformCenterChanged(PlatformCenterChangedSignal args)
         {
             _centerX = args.NewCenterX;
+        }
+
+        private void OnPlatformPlaced(PlatformPlacedSignal args)
+        {
+            if (args.PlacedPlatform != null)
+            {
+                _lastPlacedPlatformZPos = (_gameManager.GameConfigs.PlatformLength * 0.5f) + args.PlacedPlatform.transform.position.z;
+            }
+        }
+
+        private void OnLevelFinished(LevelFinishSuccessSignal args)
+        {
+            _isLevelFinishedSuccessfully = true;
         }
     }
 }

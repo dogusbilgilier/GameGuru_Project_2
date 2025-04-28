@@ -27,32 +27,38 @@ namespace Game
         public void Initialize(SignalBus signalBus)
         {
             _signalBus = signalBus;
-            _signalBus.Subscribe<LevelFinishedSignal>(OnLevelFinished);
+            _signalBus.Subscribe<LevelFinishSuccessSignal>(OnLevelFinished);
+            _signalBus.Subscribe<LevelCompletelyFailed>(OnLevelCompletelyFailed);
         }
 
-        private void OnLevelFinished(LevelFinishedSignal args)
-        {
-            if (args.IsSuccess)
-            {
-                Debug.Log("Level finished");
-                _completedLevelsInSession++;
-                LinearLevelIndex++;
 
-                ReleasablePlatformCountsInTheBack();
-            }
+        private void OnLevelFinished(LevelFinishSuccessSignal args)
+        {
+            _completedLevelsInSession++;
+            LinearLevelIndex++;
+
+            ReleasablePlatformCountsInTheBack();
+        }
+
+        private void OnLevelCompletelyFailed()
+        {
+            UnloadLevel();
+        }
+
+        private void UnloadLevel()
+        {
+            Destroy(CurrentLevelInstance.gameObject);
         }
 
         private void ReleasablePlatformCountsInTheBack()
         {
             if (_completedLevelsInSession > 2)
             {
-                int levelCountToRelease = _completedLevelsInSession - 2;
-
                 int platformCountToRelease = _levelPrefabs[(LinearLevelIndex - 2) % _levelPrefabs.Length].platformCount;
-            _signalBus.Fire<ClearPlatformsSignal>(new  ClearPlatformsSignal
-            {
-                Count = platformCountToRelease
-            });
+                _signalBus.Fire<ClearPlatformsSignal>(new ClearPlatformsSignal
+                {
+                    Count = platformCountToRelease
+                });
             }
         }
 
