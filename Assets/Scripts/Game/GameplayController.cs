@@ -23,7 +23,7 @@ namespace Game
             _soundManager.Initialize(_signalBus);
 
 
-            SetGameplayState(GameplayState.Initial);
+            SetGameplayState(GameplayState.Menu);
         }
 
         public void PrepareGameplay()
@@ -32,8 +32,11 @@ namespace Game
             _platformManager.PrepareForLevel();
         }
 
-        private void SetGameplayState(GameplayState state)
+        public void SetGameplayState(GameplayState state)
         {
+            if (_currentGameplayState == state)
+                return;
+            
             _signalBus.Fire(new GameplayStateChangedSignal
             {
                 PreviousGameplayState = _currentGameplayState,
@@ -57,7 +60,7 @@ namespace Game
 public enum GameplayState
 {
     None,
-    Initial,
+    Menu,
     Game,
     Fail,
     Win

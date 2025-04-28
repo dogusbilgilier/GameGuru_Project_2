@@ -1,4 +1,4 @@
-﻿using DefaultNamespace;
+﻿using Game;
 using UnityEngine;
 using Zenject;
 
@@ -6,16 +6,17 @@ namespace Game
 {
     public class GameManager : MonoBehaviour, IInitializable
     {
+        [Inject] private DiContainer _diContainer;
         public static GameManager Instance;
+
         [Inject] SignalBus _signalBus;
         public GameConfigs GameConfigs;
 
         [Header("References")]
         [SerializeField] private GameplayController _gameplayController;
         [SerializeField] private LevelManager _levelManager;
-
-        public GameplayController GameplayController => _gameplayController;
-        public LevelManager LevelManager => _levelManager;
+        [SerializeField] private MainPlayerController _mainPlayerControllerPrefab;
+        [SerializeField] private CameraController _cameraController;
 
         public void Initialize()
         {
@@ -24,8 +25,30 @@ namespace Game
 
             _levelManager.Initialize(_signalBus);
             _gameplayController.Initialize(_signalBus);
+            
+            _signalBus.Subscribe<PlayerReachFinalPlatformSignal>(OnPlayerReachFinalPlatform);
+            _signalBus.Subscribe<PlayerFallSignal>(OnPlayerFall);
 
-            _signalBus.Subscribe<LevelFinishedSignal>(OnLevelFinished);
+            CreateMainPlayer();
+        }
+
+        private void OnPlayerFall()
+        {
+            _gameplayController.OnLevelFailed();
+        }
+
+        private void CreateMainPlayer()
+        {
+            MainPlayerController mainPlayerController = Instantiate(_mainPlayerControllerPrefab, transform);
+
+            mainPlayerController.Initialize(_signalBus);
+            _diContainer.Inject(mainPlayerController);
+            _cameraController.Initialize(_signalBus);
+
+            _signalBus.Fire(new MainPlayerCreatedSignal
+            {
+                MainPlayerController = mainPlayerController
+            });
         }
 
         private void PrepareGameplay()
@@ -42,23 +65,30 @@ namespace Game
                 {
                     _signalBus.Fire(new PlacePlatformRequestSignal());
                 }
+                else if (_gameplayController.CurrentGameplayState == GameplayState.Menu)
+                {
+                    _signalBus.Fire(new LevelStartedSignal());
+                    PrepareGameplay();
+                }
                 else
                 {
-                    PrepareGameplay();
+                    _gameplayController.SetGameplayState(GameplayState.Menu);
                 }
             }
         }
 
-        private void OnLevelFinished(LevelFinishedSignal args)
+        private void OnPlayerReachFinalPlatform()
         {
-            if (args.IsSuccess)
-            {
-                _gameplayController.OnLevelCompleted();
-            }
-            else
-            {
-                _gameplayController.OnLevelFailed();
-            }
+            _gameplayController.OnLevelCompleted();
         }
     }
+}
+
+public struct LevelStartedSignal
+{
+}
+
+public struct MainPlayerCreatedSignal
+{
+    public MainPlayerController MainPlayerController;
 }

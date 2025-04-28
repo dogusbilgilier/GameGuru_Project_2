@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Zenject;
 
-namespace DefaultNamespace
+namespace Game
 {
     public class Level : MonoBehaviour
     {
@@ -21,6 +21,8 @@ namespace DefaultNamespace
             bool isFirstLevelInSession = _levelManager.CompletedLevelsInSession == 0;
             Vector3 finishPos = Vector3.forward * _gameManager.GameConfigs.PlatformLength * (platformCount + 1);
             _finishPlatform.transform.localPosition = _finishPlatform.GetPlatformsLength() * 0.5f * Vector3.forward + finishPos;
+
+            _finishPlatform.Initialize();
         }
 
         public float GetLevelLength()

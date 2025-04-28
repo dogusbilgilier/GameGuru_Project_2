@@ -20,5 +20,10 @@ namespace Game
         [Range(0f, 1f)] public float TolerancePercent;
         public float MovementOverflowAmount;
         public float MoveSpeed;
+
+        [Header("Player Settings")]
+        public float PlayerMovementSpeed;
+        public float PlayerHorizontalSpeed;
+        public float PlayerStartDistance;
     }
 }

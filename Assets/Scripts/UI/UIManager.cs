@@ -39,7 +39,7 @@ namespace UI
             foreach (UIPanel panel in _allPanels)
                 panel.HidePanel();
 
-            if (args.CurrenyGameplayState == GameplayState.Initial)
+            if (args.CurrenyGameplayState == GameplayState.Menu)
             {
                 _menuPanel.ShowPanel();
             }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef53432c04694134b7293ba65b4dbb2e, type: 3}
   m_Name: GameConfigs
   m_EditorClassIdentifier: 
-  _platformMaterials:
+  PlatformMaterials:
   - {fileID: 2100000, guid: d1e7205df0c8b0142bf4385f4199ab2c, type: 2}
   - {fileID: 2100000, guid: 5b25cd95e3901d24f89b00fa0a88cf4c, type: 2}
   - {fileID: 2100000, guid: a3f65138ba8a675438e7191cd4351bfe, type: 2}
@@ -37,6 +37,9 @@ MonoBehaviour:
   PlatformWidth: 3
   PlatformLength: 5
   PlatformDepth: 0.5
-  _tolerancePercent: 0.112
-  _movementOverflowAmount: 0
-  _moveSpeed: 1
+  TolerancePercent: 0.1
+  MovementOverflowAmount: 0
+  MoveSpeed: 1
+  PlayerMovementSpeed: 2
+  PlayerHorizontalSpeed: 2
+  PlayerStartDistance: 1

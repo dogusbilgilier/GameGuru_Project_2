@@ -10,6 +10,16 @@ namespace Game.GameElements
 
         public void Initialize()
         {
+            SetWidth();
+        }
+
+        private void SetWidth()
+        {
+            float targetWidth = GameConfigs.Instance.PlatformWidth;
+            float currentWidth = _meshRenderer.bounds.size.x;
+
+            float scaleMultiplier = targetWidth / currentWidth;
+            transform.localScale = new Vector3(transform.localScale.x * scaleMultiplier, transform.localScale.y, transform.localScale.z);
         }
 
         public float GetPlatformsLength()
